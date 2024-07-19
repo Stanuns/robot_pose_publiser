@@ -73,8 +73,8 @@ private:
     msg.header.stamp = this->get_clock()->now();
     msg.header.frame_id = fromFrameRel;
     msg.pose.position.x = t.transform.translation.x;
-    msg.pose.position.y = t.transform.translation.x;
-    msg.pose.position.z = t.transform.translation.y;
+    msg.pose.position.y = t.transform.translation.y;
+    msg.pose.position.z = t.transform.translation.z;
     // tf2::Quaternion q;
     msg.pose.orientation = t.transform.rotation;
 
