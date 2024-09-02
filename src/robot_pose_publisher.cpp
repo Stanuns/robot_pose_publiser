@@ -12,6 +12,7 @@
 #include "tf2_ros/buffer.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
 using namespace std::chrono_literals;
 
@@ -31,7 +32,7 @@ public:
 
     // Create robot_pose publisher
     publisher_ =
-      this->create_publisher<geometry_msgs::msg::PoseStamped>("robot_pose", 1);
+      this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("pose", 1);
 
       RCLCPP_INFO(
       this->get_logger(), "robot pose publish........");
@@ -69,21 +70,21 @@ private:
       return;
     }
 
-    geometry_msgs::msg::PoseStamped msg;
+    geometry_msgs::msg::PoseWithCovarianceStamped msg;
     msg.header.stamp = this->get_clock()->now();
     msg.header.frame_id = fromFrameRel;
-    msg.pose.position.x = t.transform.translation.x;
-    msg.pose.position.y = t.transform.translation.y;
-    msg.pose.position.z = t.transform.translation.z;
+    msg.pose.pose.position.x = t.transform.translation.x;
+    msg.pose.pose.position.y = t.transform.translation.y;
+    msg.pose.pose.position.z = t.transform.translation.z;
     // tf2::Quaternion q;
-    msg.pose.orientation = t.transform.rotation;
+    msg.pose.pose.orientation = t.transform.rotation;
 
     publisher_->publish(msg);
     
   }
 
   rclcpp::TimerBase::SharedPtr timer_{nullptr};
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_{nullptr};
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr publisher_{nullptr};
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::string target_frame_;
