@@ -32,14 +32,15 @@ public:
 
     // Create robot_pose publisher
     publisher_ =
-      this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("pose", 1);
+      this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose", 1);
+    publisher_2_ =
+      this->create_publisher<geometry_msgs::msg::PoseStamped>("/curr_pose", 1);
 
-      RCLCPP_INFO(
-      this->get_logger(), "robot pose publish........");
+    RCLCPP_INFO(this->get_logger(), "robot pose publish........");
 
     // Call on_timer function every second
     timer_ = this->create_wall_timer(
-      0.1s, std::bind(&RobotPosePublisher::on_timer, this));
+      0.2s, std::bind(&RobotPosePublisher::on_timer, this));
   }
 
 private:
@@ -49,7 +50,6 @@ private:
     // compute transformations
     std::string fromFrameRel = target_frame_.c_str();
     std::string toFrameRel = "map";
-
 
     geometry_msgs::msg::TransformStamped t;
 
@@ -61,12 +61,11 @@ private:
       t = tf_buffer_->lookupTransform(
         toFrameRel, 
         fromFrameRel,
-        now,
-        50ms); //tf2::TimePointZero
+        tf2::TimePointZero); //tf2::TimePointZero
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not transform %s to %s: %s",
-        toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
+      // RCLCPP_INFO(
+      //   this->get_logger(), "Could not transform %s to %s: %s",
+      //   toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
       return;
     }
 
@@ -76,15 +75,23 @@ private:
     msg.pose.pose.position.x = t.transform.translation.x;
     msg.pose.pose.position.y = t.transform.translation.y;
     msg.pose.pose.position.z = t.transform.translation.z;
-    // tf2::Quaternion q;
     msg.pose.pose.orientation = t.transform.rotation;
-
     publisher_->publish(msg);
+
+    geometry_msgs::msg::PoseStamped msg2;
+    msg2.header.stamp = this->get_clock()->now();
+    msg2.header.frame_id = fromFrameRel;
+    msg2.pose.position.x = t.transform.translation.x;
+    msg2.pose.position.y = t.transform.translation.y;
+    msg2.pose.position.z = t.transform.translation.z;
+    msg2.pose.orientation = t.transform.rotation;
+    publisher_2_->publish(msg2);
     
   }
 
   rclcpp::TimerBase::SharedPtr timer_{nullptr};
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr publisher_{nullptr};
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_2_{nullptr};
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::string target_frame_;
