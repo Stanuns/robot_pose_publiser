@@ -30,17 +30,23 @@ public:
     tf_listener_ =
       std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(5));
+    qos.reliable();
+    // qos.best_effort();   // qos.durability_volatile() 或 qos.best_effort() 更稳
+    qos.durability_volatile();  // 不需要持久化，订阅者连接后不需要历史数据
+    // auto qos = rclcpp::SensorDataQoS();
+
     // Create robot_pose publisher
     publisher_ =
-      this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose", 1);
+      this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose", qos);
     publisher_2_ =
-      this->create_publisher<geometry_msgs::msg::PoseStamped>("/curr_pose", 1);
+      this->create_publisher<geometry_msgs::msg::PoseStamped>("/curr_pose", qos);
 
     RCLCPP_INFO(this->get_logger(), "robot pose publish........");
 
     // Call on_timer function every second
     timer_ = this->create_wall_timer(
-      0.2s, std::bind(&RobotPosePublisher::on_timer, this));
+      0.1s, std::bind(&RobotPosePublisher::on_timer, this));
   }
 
 private:
